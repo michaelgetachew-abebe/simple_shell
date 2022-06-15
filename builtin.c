@@ -32,50 +32,49 @@ int (*get_builtin(char *command))(char **args, char **front)
 	}
 	return (funcs[i].f);
 }
-
 /**
- * shellby_exit - Causes normal process termination
- *                for the shellby shell.
- * @args: An array of arguments containing the exit value.
- * @front: A double pointer to the beginning of args.
- *
- * Return: If there are no arguments - -3.
- *         If the given exit value is invalid - 2.
- *         O/w - exits with the given status value.
- *
- * Description: Upon returning -3, the program exits back in the main function.
+ * shelby_exit - Exit Status for built-in commands
+ * @cmd: Array of parsed command strings
+ * @input: Input recieved from user (to be freed)
+ * @argv: Arguments before program starts(argv[0] == Shell Program Name)
+ * @c: Shell execution count
+ * @stat: Exit status
  */
-int shellby_exit(char **args, char **front)
-{
-	int i, len_of_int = 10;
-	unsigned int num = 0, max = 1 << (sizeof(int) * 8 - 1);
 
-	if (args[0])
+void shellby_exit(char **cmd, char *input, char **argv, int c, int stat)
+{
+	int status, i = 0;
+
+	if (cmd[1] == NULL)
 	{
-		if (args[0][0] == '+')
+		free(input);
+		free(cmd);
+		exit(stat);
+	}
+	while (cmd[1][i])
+	{
+		if (_isalpha(cmd[1][i++]) != 0)
 		{
-			i = 1;
-			len_of_int++;
+			_prerror(argv, c, cmd);
+			free(input);
+			free(cmd);
+			exit(2);
 		}
-		for (; args[0][i]; i++)
+		else
 		{
-			if (i <= len_of_int && args[0][i] >= '0' && args[0][i] <= '9')
-				num = (num * 10) + (args[0][i] - '0');
-			else
-				return (create_error(--args, 2));
+			status = _atoi(cmd[1]);
+			if (status == 2)
+			{
+				_prerror(argv, c, cmd);
+				free(input);
+				free(cmd);
+				exit(status);
+			}
+			free(input);
+			free(cmd);
+			exit(status);
 		}
 	}
-	else
-	{
-		return (-3);
-	}
-	if (num > max - 1)
-		return (create_error(--args, 2));
-	args -= 1;
-	free_args(args, front);
-	free_env();
-	free_alias_list(aliases);
-	exit(num);
 }
 
 /**
